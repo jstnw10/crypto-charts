@@ -30,7 +30,7 @@ export default function Home({ searchParams: { ticker } }: { searchParams: { tic
             <CardDescription>{ticker} last 30d</CardDescription>
           </div>
           <ErrorBoundary fallback={<span className="text-sm text-red-600">Error</span>}>
-            <Suspense fallback={<div className="h-7 w-64 rounded bg-gray-50/10 animate-pulse" />}>
+            <Suspense fallback={<div className="h-5 w-40 md:h-7 md:w-64 rounded bg-gray-50/10 animate-pulse" />}>
               <LastPrice benchmark={benchmarkPromise} />
             </Suspense>
           </ErrorBoundary>
