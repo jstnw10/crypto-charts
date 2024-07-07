@@ -1,12 +1,14 @@
 "use client";
 
-import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
+import { Button } from "@/components/ui/button";
+import { CardTitle } from "@/components/ui/card";
+import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
+import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { SimplePriceFeed } from "@/lib/pyth";
 import { track } from "@vercel/analytics";
 import { useRouter, useSearchParams } from "next/navigation";
-import { use, useEffect, useState } from "react";
-import { CardTitle } from "./ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { use, useEffect, useMemo, useState } from "react";
+import { Input } from "./ui/input";
 
 interface TokenCommandProps {
   priceFeedData: Promise<SimplePriceFeed[]>;
@@ -31,8 +33,6 @@ export function TokenCommand(props: TokenCommandProps) {
   }, []);
 
   const isDesktop = useMediaQuery("(min-width: 768px)");
-
-  console.log(priceFeedData);
 
   if (isDesktop)
     return (
@@ -67,28 +67,7 @@ export function TokenCommand(props: TokenCommandProps) {
       </>
     );
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button className="w-min" onClick={() => setOpen(true)}>
-          <CardTitle className="underline decoration-dashed">{searchParams.get("ticker" ?? "ERROR")}</CardTitle>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="p-0" side="bottom" align="start">
-        <Command>
-          <CommandInput placeholder="Change status..." />
-          <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
-            <CommandGroup>
-              {priceFeedData.map((status) => (
-                <TickerCommandItem key={status.symbol} {...status} onClose={() => setOpen(false)} />
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
+  return <MobileDrawer priceFeedData={priceFeedData} open={open} setOpen={setOpen} />;
 }
 
 const TickerCommandItem = ({ symbol, description, base, onClose }: SimplePriceFeed & { onClose: () => void }) => {
@@ -107,6 +86,92 @@ const TickerCommandItem = ({ symbol, description, base, onClose }: SimplePriceFe
         <span className="text-sm">{description}</span>
       </span>
     </CommandItem>
+  );
+};
+
+interface MobileDrawerProps {
+  priceFeedData: SimplePriceFeed[];
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
+
+const MobileDrawer = (props: MobileDrawerProps) => {
+  const { priceFeedData, open, setOpen } = props;
+  const searchParams = useSearchParams();
+
+  const [currentInput, setCurrentInput] = useState("");
+
+  const filteredItems = useMemo(() => {
+    if (currentInput === "") return null;
+    return priceFeedData
+      .filter(
+        (item) =>
+          item.symbol.toLowerCase().includes(currentInput.toLowerCase()) ||
+          item.description.toLowerCase().includes(currentInput.toLowerCase()) ||
+          item.base.toLowerCase().includes(currentInput.toLowerCase())
+      )
+      .slice(0, 3);
+  }, [priceFeedData, currentInput]);
+
+  return (
+    <Drawer
+      open={open}
+      onOpenChange={(change) => {
+        setOpen(change);
+        setTimeout(() => setCurrentInput(""), 300);
+      }}
+    >
+      <DrawerTrigger asChild>
+        <button className="w-min" onClick={() => setOpen(true)}>
+          <CardTitle className="underline decoration-dashed">{searchParams.get("ticker" ?? "ERROR")}</CardTitle>
+        </button>
+      </DrawerTrigger>
+      <DrawerContent>
+        <div className="mx-auto w-full max-w-sm flex-grow">
+          <DrawerHeader>
+            <DrawerTitle className="text-start">Select Ticker</DrawerTitle>
+          </DrawerHeader>
+          <div className="flex-grow w-full space-y-4">
+            <Input placeholder="BTC/USD" onChange={(e) => setCurrentInput(e.target.value)} />
+            <div className="space-y-3">
+              {filteredItems ? (
+                filteredItems.map((priceFeed) => <MobileDrawerTickerItem key={priceFeed.base} {...priceFeed} onClose={() => setOpen(false)} />)
+              ) : (
+                <>
+                  <MobileDrawerTickerItem base="Solana" description="Solana / US Dollar" symbol="SOL/USD" onClose={() => setOpen(false)} />
+                  <MobileDrawerTickerItem base="Bitcoin" description="Bitcoin / US Dollar" symbol="BTC/USD" onClose={() => setOpen(false)} />
+                  <MobileDrawerTickerItem base="Sui" description="SUI / US Dollar" symbol="SUI/USD" onClose={() => setOpen(false)} />
+                </>
+              )}
+            </div>
+          </div>
+          <DrawerFooter>
+            <DrawerClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+};
+
+const MobileDrawerTickerItem = ({ symbol, description, base, onClose }: SimplePriceFeed & { onClose: () => void }) => {
+  const router = useRouter();
+
+  function onSelect() {
+    router.push(`/?ticker=${symbol}`);
+    track("ticker_command_item_selected", { base });
+    onClose();
+  }
+
+  return (
+    <Button onClick={onSelect} variant={"outline"} className="w-full py-2 text-start justify-start items-start h-auto">
+      <span className="flex-col gap-px inline-flex items-start justify-start">
+        <span className="text-lg">{base}</span>
+        <span className="text-sm">{description}</span>
+      </span>
+    </Button>
   );
 };
 
