@@ -18,7 +18,7 @@ No credentials needed, just
 2. cd into dir
 
    ```bash
-   cd stocks
+   cd crypto-charts
    ```
 
 3. install dependencies
