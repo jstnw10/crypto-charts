@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`antialiased font-sans ${fontSans} font-mono ${fontMono} bg-zinc-950`}>
+      <body className={`antialiased font-sans ${fontSans} font-mono ${fontMono}`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
         </ThemeProvider>
