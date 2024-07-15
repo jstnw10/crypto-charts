@@ -1,7 +1,7 @@
-import { LastPrice } from "@/components/price";
+import { JotaiProvider } from "@/components/jotai-provider";
 import { PythChart } from "@/components/pyth-chart";
 import { TokenCommand } from "@/components/token-command";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBenchmarkData, getPriceFeedsData } from "@/lib/pyth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -18,33 +18,29 @@ export default function Home({ searchParams: { ticker } }: { searchParams: { tic
   const priceFeedPromise = getPriceFeedsData();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4">
-      <Card className="w-full max-w-screen-lg">
-        <CardHeader className="flex flex-row items-start justify-between space-y-0 px-4 md:px-6 py-5 sm:py-6">
+    <main className="flex min-h-[100dvh] flex-col items-center justify-center px-4">
+      <Card className="w-full max-w-screen-lg max-md:border-none relative">
+        <CardHeader className="max-md:px-0 max-md:py-0 flex flex-row items-start justify-between space-y-0 px-4 md:px-6 py-5 sm:py-6">
           <div className="flex flex-1 flex-col justify-center gap-1">
             <ErrorBoundary fallback={<span className="text-sm text-red-600">Error</span>}>
               <Suspense fallback={<CardTitle>{ticker}</CardTitle>}>
                 <TokenCommand priceFeedData={priceFeedPromise} />
               </Suspense>
             </ErrorBoundary>
-            <CardDescription>{ticker} last 30d</CardDescription>
           </div>
-          <ErrorBoundary fallback={<span className="text-sm text-red-600">Error</span>}>
-            <Suspense fallback={<div className="h-5 w-40 md:h-7 md:w-64 rounded bg-gray-50/10 animate-pulse" />}>
-              <LastPrice benchmark={benchmarkPromise} />
-            </Suspense>
-          </ErrorBoundary>
         </CardHeader>
         <CardContent className="px-2 sm:p-6 w-full">
           <div className="aspect-auto h-[400px] w-full flex-col flex items-center justify-center">
             <ErrorBoundary fallback={<span className="text-sm text-red-600">Error with Pyth (ticker not found?)</span>}>
               <Suspense fallback={<ChartSkeleton />}>
-                <PythChart benchmark={benchmarkPromise} />
+                <JotaiProvider>
+                  <PythChart benchmark={benchmarkPromise} />
+                </JotaiProvider>
               </Suspense>
             </ErrorBoundary>
           </div>
         </CardContent>
-        <CardFooter className="flex-col items-start gap-2 text-sm">
+        <CardFooter className="flex-col items-start gap-2 text-sm max-md:hidden">
           <div className="font-medium leading-none">
             <>
               Data by{" "}
@@ -73,6 +69,7 @@ const ChartSkeleton = () => {
           fill="#110F23"
         />
       </svg>
+      <div className="absolute top-4 right-4 h-5 w-40 md:h-7 md:w-64 rounded bg-gray-50/10 animate-pulse" />
     </div>
   );
 };

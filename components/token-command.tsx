@@ -81,10 +81,10 @@ const TickerCommandItem = ({ symbol, description, base, onClose }: SimplePriceFe
 
   return (
     <CommandItem onSelect={onSelect} value={base}>
-      <span className="flex-col gap-0.5 inline-flex">
-        <span className="text-lg">{base}</span>
-        <span className="text-sm">{description}</span>
-      </span>
+      <div className="flex-col gap-0.5 flex *:font-sans *:antialiased">
+        <p className="text-lg">{base}</p>
+        <p className="text-sm">{description}</p>
+      </div>
     </CommandItem>
   );
 };
