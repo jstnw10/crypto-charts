@@ -4,12 +4,13 @@ import { ChartConfig, ChartContainer, ChartTooltip } from "@/components/ui/chart
 import { Benchmark } from "@/lib/pyth";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { atom, useAtomValue, useSetAtom } from "jotai";
+import { atom, useAtom, useAtomValue } from "jotai";
 import { Triangle } from "lucide-react";
-import { ComponentProps, use, useMemo } from "react";
+import { ComponentProps, use, useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { CategoricalChartState } from "recharts/types/chart/types";
 import { Dot, Props } from "recharts/types/shape/Dot";
+import { Toggle } from "./ui/toggle";
 
 type TooltipDataAtomData = {
   tooltipVisible: boolean;
@@ -79,7 +80,8 @@ export const PythChart = (props: PythChartProps) => {
   const minValue = useMemo(() => Math.min(...formattedData.map((item) => Math.min(item.open, item.close))), [formattedData]);
   const maxValue = useMemo(() => Math.max(...formattedData.map((item) => Math.max(item.open, item.close))), [formattedData]);
 
-  const setTooltipData = useSetAtom(tooltipDataAtom);
+  const [gradientLine, setGradientLine] = useState(true);
+  const [tooltipData, setTooltipData] = useAtom(tooltipDataAtom);
 
   const handleMouseEnter = () => setTooltipData({ tooltipVisible: true, value: null, type: "mouse enter" });
   const handleMouseLeave = () => setTooltipData({ tooltipVisible: false, value: null, type: "mouse leave" });
@@ -94,10 +96,11 @@ export const PythChart = (props: PythChartProps) => {
 
   const gradientOffset = useMemo(() => {
     return 100 - ((formattedData[0].close - minValue) / (maxValue - minValue)) * 100;
-  }, [formattedData]);
+  }, [formattedData, minValue, maxValue]);
 
   return (
     <>
+      {/* <Test /> */}
       <ChartContainer
         config={chartConfig}
         className="aspect-auto h-[400px] w-full"
@@ -135,13 +138,13 @@ export const PythChart = (props: PythChartProps) => {
               domain={calculateYAxisDomain(minValue, maxValue)}
               tick={({ x, y, payload }) => <YAxisTick x={x} y={y} payload={payload} />}
             />
-            <ChartTooltipAtomWrapper />
+            <ChartTooltip active={tooltipData.tooltipVisible} cursor={{ stroke: "#29BDAD", strokeDasharray: "5 5" }} content={<></>} />{" "}
             <defs>
               <linearGradient id="splitColor" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset={`${gradientOffset}%`} stopColor={chartConfig.up.color} />
-                <stop offset={`${gradientOffset}%`} stopColor={chartConfig.down.color} />
+                <stop offset={`${gradientOffset}%`} stopColor={gradientLine ? chartConfig.up.color : chartConfig.close.color} />
+                <stop offset={`${gradientOffset}%`} stopColor={gradientLine ? chartConfig.down.color : chartConfig.close.color} />
               </linearGradient>
-            </defs>
+            </defs>{" "}
             <CartesianGrid strokeDasharray="5 5" vertical={false} />
             <Line
               type="monotone"
@@ -151,42 +154,37 @@ export const PythChart = (props: PythChartProps) => {
               dot={false}
               activeDot={(props: ComponentProps<typeof Dot>) => {
                 const actualProps = props as Props & { value: number };
+                if (!tooltipData.tooltipVisible) return <circle />;
                 return (
-                  <circle cx={props.cx} cy={props.cy} r={4} strokeWidth={0} fill={actualProps.value >= formattedData[0].close ? chartConfig.up.color : chartConfig.down.color} />
+                  <circle
+                    cx={props.cx}
+                    cy={props.cy}
+                    r={4}
+                    strokeWidth={0}
+                    fill={!gradientLine ? chartConfig.close.color : actualProps.value >= formattedData[0].close ? chartConfig.up.color : chartConfig.down.color}
+                  />
                 );
               }}
             />
           </LineChart>
         </ResponsiveContainer>
       </ChartContainer>
-      <div className="absolute md:right-4 md:top-4 right-0 top-0">
+      <div className="absolute md:right-4 md:top-4 right-0 top-4 flex flex-col gap-3 items-end md:flex-row-reverse md:gap-4 md:items-center">
         <LastPriceAtomWrapper firstValue={benchmark.c[0]} value={benchmark.c.at(-1) ?? 0} />
+        <Toggle size={"xs"} pressed={gradientLine} onPressedChange={(value) => setGradientLine(value)}>
+          <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="hardGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="50%" stop-color={chartConfig.up.color} />
+                <stop offset="50%" stop-color={chartConfig.down.color} />
+              </linearGradient>
+            </defs>
+            <circle cx="8" cy="8" r="8" fill="url(#hardGradient)" />
+          </svg>
+        </Toggle>
       </div>
     </>
   );
-};
-
-const ChartTooltipAtomWrapper = (props: ComponentProps<typeof ChartTooltip>) => {
-  const { active, cursor, ...rest } = props;
-  const { tooltipVisible: isTooltipVisible } = useAtomValue(tooltipDataAtom);
-
-  return (
-    <ChartTooltip
-      active={isTooltipVisible}
-      //this doesnt work anyways
-      cursor={{ stroke: "#29BDAD", strokeDasharray: "5 5" }}
-      {...rest}
-      content={<></>}
-    />
-  );
-};
-
-//What the fuck?
-ChartTooltipAtomWrapper.displayName = ChartTooltip.displayName;
-ChartTooltipAtomWrapper.defaultProps = {
-  ...ChartTooltip.defaultProps,
-  active: false,
-  cursor: { stroke: "#29BDAD", strokeDasharray: "5 5" },
 };
 
 interface AxisTickProps {

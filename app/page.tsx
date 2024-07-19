@@ -1,7 +1,7 @@
 import { JotaiProvider } from "@/components/jotai-provider";
 import { PythChart } from "@/components/pyth-chart";
 import { TokenCommand } from "@/components/token-command";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBenchmarkData, getPriceFeedsData } from "@/lib/pyth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -20,7 +20,7 @@ export default function Home({ searchParams: { ticker } }: { searchParams: { tic
   return (
     <main className="flex min-h-[100dvh] flex-col items-center justify-center px-4">
       <Card className="w-full max-w-screen-lg max-md:border-none relative">
-        <CardHeader className="max-md:px-0 max-md:py-0 flex flex-row items-start justify-between space-y-0 px-4 md:px-6 py-5 sm:py-6">
+        <CardHeader className="max-md:px-0 max-md:pt-4 max-md:pb-20 flex flex-row items-start justify-between space-y-0 px-4 md:px-6 py-5 sm:py-6">
           <div className="flex flex-1 flex-col justify-center gap-1">
             <ErrorBoundary fallback={<span className="text-sm text-red-600">Error</span>}>
               <Suspense fallback={<CardTitle>{ticker}</CardTitle>}>
@@ -29,7 +29,7 @@ export default function Home({ searchParams: { ticker } }: { searchParams: { tic
             </ErrorBoundary>
           </div>
         </CardHeader>
-        <CardContent className="px-2 sm:p-6 w-full">
+        <CardContent className="px-0 md:px-2 sm:p-6 w-full">
           <div className="aspect-auto h-[400px] w-full flex-col flex items-center justify-center">
             <ErrorBoundary fallback={<span className="text-sm text-red-600">Error with Pyth (ticker not found?)</span>}>
               <Suspense fallback={<ChartSkeleton />}>
@@ -40,17 +40,7 @@ export default function Home({ searchParams: { ticker } }: { searchParams: { tic
             </ErrorBoundary>
           </div>
         </CardContent>
-        <CardFooter className="flex-col items-start gap-2 text-sm max-md:hidden">
-          <div className="font-medium leading-none">
-            <>
-              Data by{" "}
-              <a href="https://pyth.network/" target="_blank" rel="noopener noreferrer" className="text-green-500">
-                Pyth
-              </a>
-              .
-            </>
-          </div>
-        </CardFooter>
+        {/* <CardFooter className="flex-col items-start gap-2 text-sm max-md:hidden"></CardFooter> */}
       </Card>
     </main>
   );
