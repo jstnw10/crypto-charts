@@ -13,7 +13,7 @@ export type Benchmark = {
 export async function getBenchmarkData(ticker = "BTC/USD"): Promise<Benchmark> {
   const now = Date.now() / 1000;
   const thirtyDaysAgo = now - 30 * 24 * 60 * 60;
-  const searchParams = new URLSearchParams({ symbol: `Crypto.${ticker}`, resolution: "60", from: thirtyDaysAgo.toFixed(0), to: now.toFixed(0) });
+  const searchParams = new URLSearchParams({ symbol: `Crypto.${ticker}`, resolution: "360", from: thirtyDaysAgo.toFixed(0), to: now.toFixed(0) });
   const url = `${BASE_URL}/shims/tradingview/history?${searchParams.toString()}`;
   const res = await fetch(url, {
     headers: {
